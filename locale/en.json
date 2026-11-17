@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Auto Team",
+    "description": "Provisions the session's agent-team pair at session start and keeps delegation pointed at teams, workflow, and subagents."
+  }
+}

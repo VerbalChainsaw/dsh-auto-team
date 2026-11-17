@@ -1,0 +1,50 @@
+# Temporary verification overlay for the headless profile.
+#
+# It mounts the same rows the Agent Teams bundle installs in the web profile, plus
+# Auto Team from this directory, so `dsh --profile headless --patch <this>` creates
+# a fresh session that exercises the real `agent/created` provisioning path.
+#
+# Mirrors @deepseek-ai/dsh-experimental-agent-team-profile/cordis.patch.yml.
+
+- id: tool-subagent-control
+  disabled: true
+
+- id: tool-subagent-list-agents
+  disabled: true
+
+- id: tool-subagent
+  disabled: true
+
+- id: tool-subagent-fork
+  disabled: true
+
+- insert:
+    - id: agent-team
+      name: '@deepseek-ai/dsh-experimental-agent-team'
+      config:
+        maxMembers: 8
+        maxTasks: 256
+        maxMessageBytes: 65536
+        disposalTimeoutMs: 5000
+
+    - id: tool-agent-team
+      name: '@deepseek-ai/dsh-experimental-tool-agent-team'
+      config:
+        freshProvider: spawn
+        forkProvider: fork
+
+    - id: auto-team
+      name: './index.js'
+      config:
+        enabled: true
+        startSources:
+          - startup
+        spawnTimeoutMs: 15000
+        maxAttempts: 3
+
+# Re-enable the fs/shell tool rows so a headless Lead can exercise the policies.
+- id: tool-fs
+  disabled: false
+
+- id: tool-pwsh
+  disabled: false

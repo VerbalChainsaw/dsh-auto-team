@@ -1,0 +1,26 @@
+# Auto Team — deterministic agent-team provisioning for fresh sessions.
+#
+# Applied after the Agent Teams bundle. `inject: ['agentTeams']` in index.js keeps
+# this row pending (inert, no crash) if Agent Teams is ever removed, so the profile
+# degrades instead of failing.
+#
+# The four-member crew (`scout`, `builder`, `critic`, `operator`) and their briefs
+# live in index.js, so reloading the plugin updates them without depending on patch
+# recomposition. Supply `teammates:` here only to replace the pair; overriding row
+# id `auto-team` replaces this whole `config`, so restate every field you keep.
+
+- insert:
+    - id: auto-team
+      name: 'dsh-auto-team'
+      config:
+        enabled: true
+        provisionOn: lazy
+        # startSources applies only when provisionOn is `startup`. In lazy mode the
+        # crew is created at the first durable-team delegation instead.
+        startSources:
+          - startup
+        # Total budget for one provisioning attempt. `agent/created` is awaited
+        # before the session releases input, so this bounds session-start latency
+        # for the whole crew, not each spawn individually.
+        spawnTimeoutMs: 15000
+        maxAttempts: 3

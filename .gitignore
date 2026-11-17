@@ -1,0 +1,18 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Packed artifacts live outside the repo, but never commit one by accident
+*.tgz
+*.tar.gz
+
+# Local experiment overlays and captured logs
+probe-*.yml
+*.log
+dsh-dump*.txt
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

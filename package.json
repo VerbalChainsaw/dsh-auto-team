@@ -1,0 +1,57 @@
+{
+  "name": "dsh-auto-team",
+  "version": "1.19.0",
+  "description": "Lazily provisions a four-member agent crew for the DeepSeek Harness and enforces delegation, read-only roles, reporting and cleanup. The workflow engine is the primary team mechanism.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "agents",
+    "agent-team",
+    "workflow",
+    "orchestration"
+  ],
+  "license": "MIT",
+  "author": "VerbalChainsaw",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VerbalChainsaw/dsh-auto-team.git"
+  },
+  "homepage": "https://github.com/VerbalChainsaw/dsh-auto-team#readme",
+  "bugs": {
+    "url": "https://github.com/VerbalChainsaw/dsh-auto-team/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "test": "node test/provision.test.mjs",
+    "verify": "node verify.mjs",
+    "check": "node --check index.js",
+    "prepack": "node --check index.js"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "verify.mjs",
+    "cordis.patch.yml",
+    "test/provision.test.mjs",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "VALIDATION.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
