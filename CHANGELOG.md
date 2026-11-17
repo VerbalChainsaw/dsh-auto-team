@@ -3,6 +3,22 @@
 All notable changes to `dsh-auto-team`. The format follows Keep a Changelog;
 this package uses semantic versioning.
 
+## [1.20.0] — 2026-11-17
+
+Profile compatibility, and two defects the new tests caught.
+
+- **A disarmed row is now genuinely inert**: with no Agent Teams in the profile it
+  logs one `DISARMED` line and registers **no listener** (previously it registered
+  three no-op handlers).
+- **The disarm line is actionable**: it names the missing surfaces and the bundle
+  to add — `missing=[…] fix="add @deepseek-ai/dsh-experimental-agent-team-profile …"`.
+- **Fixed**: since 1.18.0 the activation line referenced `stateLoaded` before its
+  declaration, threw inside its own `try`, and was silently swallowed — so the
+  plugin ran with **no activation record at all**. It is now declared before use,
+  and a diagnostic failure reports itself on stderr instead of vanishing.
+- README documents profile requirements, including that the minimal `naked`
+  profile is intentionally incompatible; the doctrine skill says plainly when it
+  does not apply.
 ## [1.19.0] — 2026-11-17
 
 Packaging only; behaviour is 1.18.0.

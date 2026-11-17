@@ -61,7 +61,9 @@ function makeCtx(teams) {
     count: (event) => (listeners.get(event) ?? []).length,
     async fire(event, payload, next = async () => ({ kind: 'ok', messages: [] })) {
       const list = listeners.get(event) ?? []
-      assert.ok(list.length > 0, `no listener registered for ${event}`)
+      // An inert plugin registers nothing, and that is correct: firing an event at
+      // it must be a no-op rather than a harness error.
+      if (list.length === 0) return { kind: 'allow' }
       let value
       for (const handler of list) value = await handler(payload, next)
       return value
@@ -1128,6 +1130,34 @@ await test('persistState false keeps policy state in memory only', async () => {
   await fire('tools/pre-execute', { agent: { id: 's-lead' }, name: 'send_message' }, ALLOW)
   dispose()
   assert.equal(existsSync(stateFile), false, 'nothing is written when durability is off')
+})
+
+await test('a profile without Agent Teams names what to install and registers nothing', async () => {
+  // The `naked` profile is exactly this shape: base + web app, no team service.
+  let listeners = 0
+  const ctx = {
+    agentTeams: { tryMembership: undefined },
+    on: () => {
+      listeners += 1
+      return () => {}
+    },
+  }
+  const lines = []
+  const original = console.warn
+  console.warn = (...args) => lines.push(args.join(' '))
+  let dispose
+  try {
+    dispose = apply(ctx, { enabled: true })
+  } finally {
+    console.warn = original
+    if (dispose) dispose()
+  }
+  const line = lines.find((entry) => entry.includes('[auto-team]'))
+  assert.ok(line, 'activation must say something')
+  assert.match(line, /DISARMED/)
+  assert.match(line, /missing=\[/, 'must name the missing surface')
+  assert.match(line, /dsh-experimental-agent-team-profile/, 'must name the bundle to install')
+  assert.equal(listeners, 0, 'an inert row must register no listener at all')
 })
 
 await test('exports match the Cordis Host plugin contract', async () => {

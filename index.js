@@ -250,10 +250,15 @@ export function apply(ctx, config) {
   // Upgrade guard: if a future Agent Teams release renames or drops one of the
   // three methods this plugin depends on, disable cleanly with one clear line
   // instead of emitting a DEGRADED diagnostic on every session.
-  const supported =
-    typeof teams?.tryMembership === 'function' &&
-    typeof teams?.listMembers === 'function' &&
-    typeof teams?.spawnTeammate === 'function'
+  //
+  // Name exactly what is missing. A minimal profile (for example the shipped
+  // `naked` preset) mounts no Agent Teams at all, and "DISARMED api=MISSING"
+  // alone does not tell an operator which bundle to add.
+  const missingSurfaces = []
+  if (typeof teams?.tryMembership !== 'function') missingSurfaces.push('tryMembership')
+  if (typeof teams?.listMembers !== 'function') missingSurfaces.push('listMembers')
+  if (typeof teams?.spawnTeammate !== 'function') missingSurfaces.push('spawnTeammate')
+  const supported = missingSurfaces.length === 0
   const enabled = settings.enabled !== false && supported
   const configured = Array.isArray(settings.teammates) ? settings.teammates : []
   const normalized = configured.map(normalizeTeammate).filter((spec) => spec !== undefined)
@@ -283,6 +288,10 @@ export function apply(ctx, config) {
   // Children may only run on the flash model. Enforced for the surfaces whose
   // call arguments actually name a model; teammates inherit the Lead's route.
   const flashOnly = settings.flashOnly !== false
+  // Assigned once the durable snapshot has been read, but declared here so the
+  // activation line can report it. (Referencing it before initialisation would
+  // throw inside the diagnostic's own try/catch and silently drop the line.)
+  let stateLoaded = false
   // How long session creation may wait for the pair. `agent/created` is awaited
   // before the session releases queued input, so an unbounded wait turns a
   // stalled provider into a stalled chat. Past this budget the session opens and
@@ -343,6 +352,11 @@ export function apply(ctx, config) {
       .join(',')
     console.warn(
       `[auto-team] ${enabled ? 'armed' : 'DISARMED'} api=${supported ? 'ok' : 'MISSING'} ` +
+        (supported
+          ? ''
+          : `missing=[${missingSurfaces.join(',')}] ` +
+            'fix="add @deepseek-ai/dsh-experimental-agent-team-profile to this profile, ' +
+            'or disable dsh-auto-team" ') +
         `sources=[${[...startSources].join(',')}] budget=${timeoutMs}ms ` +
         `block=${blockBudgetMs === 0 ? 'full' : `${blockBudgetMs}ms`} ` +
         `gate=${gateInitialTurn ? 'on' : 'off'} policy=${delegationPolicy} ` +
@@ -350,9 +364,16 @@ export function apply(ctx, config) {
         `provision=${provisionOn} state=${stateLoaded ? 'durable' : 'memory'} ` +
         `flash=${flashOnly ? 'only' : 'any'} ${roster}`,
     )
-  } catch {
-    // Diagnostics must never fail activation.
+  } catch (error) {
+    // Diagnostics must never fail activation — but a swallowed diagnostic is
+    // invisible, so say why it could not be written.
+    console.error('[auto-team] activation diagnostic failed:', error && error.message)
   }
+
+  // An inert row must be inert: no listeners, no state file, no handlers. This is
+  // what a minimal profile (no Agent Teams) gets when the bundle is installed
+  // anyway — a single DISARMED line and nothing else.
+  if (!enabled) return () => {}
 
   const warn = (message, error) => {
     try {
@@ -416,7 +437,6 @@ export function apply(ctx, config) {
   // Seed from disk so a reload answers the same question the same way. Any read
   // failure leaves the plugin exactly as predictable as it was before: memory only.
   const snapshot = persistState ? loadPolicyState(stateFile) : undefined
-  let stateLoaded = false
   if (snapshot !== undefined) {
     const seed = (set, key) => {
       const value = snapshot[key]

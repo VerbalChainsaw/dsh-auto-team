@@ -152,6 +152,26 @@ to, and demand a token, not a paragraph.
 Nothing in `index.js` throws. That is deliberate: a throwing `agent/created`
 listener fails session creation itself.
 
+## Profile requirements
+
+This bundle is a policy layer over surfaces that must already exist in the profile.
+
+| Dependency | Needed for | Without it |
+|---|---|---|
+| `@deepseek-ai/dsh-experimental-agent-team-profile` | `ctx.agentTeams` — the crew itself | The row loads **inert**: one line, `DISARMED api=MISSING missing=[…] fix="add …"`, no listener registered, nothing spawned, no session fails |
+| `@deepseek-ai/dsh-workflow` and subagent tools | the primary team engine (`workflow`, `subagent`) | Delegation-first still pushes work outward, but only the durable-teammate surfaces remain available |
+
+**A minimal profile is intentionally incompatible.** The shipped `naked` profile
+mounts only `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app`, with a preset
+that has files, one shell and compaction: no Agent Teams, no workflow, no
+subagent tools, no skill filesystem. `dsh-auto-team` belongs in the full profile,
+not there — and if it is installed anyway it disarms itself rather than failing
+sessions. To get a crew in a minimal profile, add the agent-team bundle to that
+profile first; this plugin cannot create the service it hooks into.
+
+The `agent-team-doctrine` skill loads only where a skill filesystem is mounted,
+so the naked preset never sees it either.
+
 ## Install
 
 `dsh-auto-team` is a plain npm package, so any pnpm-resolvable source works. Pick one:
@@ -223,7 +243,7 @@ the shipped crew is used instead.
 node test/provision.test.mjs
 ```
 
-73 assertions against the real listeners and a fake Agent Teams service: the crew
+74 assertions against the real listeners and a fake Agent Teams service: the crew
 spawns in order, team children and non-Team subagents cannot recurse, resume is
 skipped, duplicates and concurrency are idempotent, a partial roster is completed
 by name, a throwing or hanging provider cannot fail or stall creation, a spawn

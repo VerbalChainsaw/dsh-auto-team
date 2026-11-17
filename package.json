@@ -1,6 +1,6 @@
 {
   "name": "dsh-auto-team",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "description": "Lazily provisions a four-member agent crew for the DeepSeek Harness and enforces delegation, read-only roles, reporting and cleanup. The workflow engine is the primary team mechanism.",
   "keywords": [
     "dsh",
